@@ -22,7 +22,7 @@ paths:
       - ROTH Transfer
       summary: Options available to the participant
       description: |
-        This end point  returns if the participant is eligible for a ROTH transfer and details about what they are eligible to transfer.
+        This end  point  returns if the participant is eligible for a ROTH transfer and details about what they are eligible to transfer.
       parameters:
       - name: participantId
         in: path
