@@ -1,0 +1,322 @@
+openapi: 3.0.0
+info:
+  title: Participant ROTH Adjustment Services
+  description: This service provides an API for participants to transfer money to
+    ROTH or convert money to ROTH.
+  version: 1.0.0
+servers:
+- url: http://swaggerhub.centralus.cloudapp.azure.com/virts/Principal_RIS/ROTH_Transfers/1.0.0
+  description: SwaggerHub API Auto Mocking
+- url: https://api.theprincipal.net/retirement/v1/roth-adjustments/
+tags:
+- name: ROTH Transfer
+  description: Provides the ability to transfer vested money ROTH.  Also called a
+    super mega ROTH.
+- name: ROTH Conversion
+  description: Provides the ability to convert funds to ROTH.  You can only convert
+    money eligible for a rollover distribution.
+paths:
+  /participant/{participantId}/ROTH-transfer-options:
+    get:
+      tags:
+      - ROTH Transfer
+      summary: Options available to the participant
+      description: |
+        This end point  returns if the participant is eligible for a ROTH transfer and details about what they are eligible to transfer.
+      parameters:
+      - name: participantId
+        in: path
+        description: The participant id.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RothTransferOptions'
+        400:
+          description: Bad Request due to errors such as invalid participantId.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+            text/csv:
+              schema:
+                $ref: '#/components/schemas/error'
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+            text/csv:
+              schema:
+                $ref: '#/components/schemas/error'
+        403:
+          description: Forbidden. The `user` is not allowed to view a correction request
+        500:
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+            text/csv:
+              schema:
+                $ref: '#/components/schemas/error'
+  /participant/{participantId}/ROTH-transfer-quotes:
+    post:
+      tags:
+      - ROTH Transfer
+      summary: Quote for ROTH transfer
+      description: This end point allows you to quote and validate a ROTH Tranfser
+        request.
+      parameters:
+      - name: participantId
+        in: path
+        description: The participant id.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RothTransferQuoteInput'
+      responses:
+        200:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RothTransferQuote'
+        400:
+          description: Bad Request due to errors such as invalid participant.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        403:
+          description: Forbidden. The `user` is not allowed to submit correction request.
+        500:
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+  /participant/{participantId}/ROTH-transfer-requests:
+    post:
+      tags:
+      - ROTH Transfer
+      summary: Request a ROTH transfer for ROTH transfer
+      description: This end point allows you to request a ROTH transfer.
+      parameters:
+      - name: participantId
+        in: path
+        description: The participant id.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RothTransferRequestInput'
+      responses:
+        201:
+          description: Successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RothTransferRequest'
+        400:
+          description: Bad Request due to errors such as invalid participant.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        401:
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+        403:
+          description: Forbidden. The `user` is not allowed to submit correction request.
+        500:
+          description: Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+components:
+  schemas:
+    RothTransferOptions:
+      type: object
+      properties:
+        eligibilityDetails:
+          $ref: '#/components/schemas/RothTransferEligibilityDetails'
+        preTaxTransferAmountAvailable:
+          type: number
+          format: double
+          example: 35354.49
+        afterTaxTransferAmountAvailable:
+          type: number
+          format: double
+          example: 50000.0
+        feeDetails:
+          $ref: '#/components/schemas/FeeDetails'
+    RothTransferEligibilityDetails:
+      type: object
+      properties:
+        eligibleForRothTransfer:
+          type: boolean
+        ineligiblityReasons:
+          type: array
+          items:
+            $ref: '#/components/schemas/RothTransferEligibilityDetails_ineligiblityReasons'
+    FeeDetails:
+      type: object
+      properties:
+        amount:
+          type: number
+          format: double
+    RothTransferQuoteInput:
+      type: object
+      properties:
+        usCitizen:
+          type: boolean
+          description: Is the participant a United States person?  If you are a citizen
+            or resident of the U.S you are usually considered a U.S person.
+        transferAmountDetails:
+          $ref: '#/components/schemas/TransferAmountDetails'
+        specificTransferInstructions:
+          type: string
+          description: Specific instructions on what money types to transfer.
+          example: Transfer my employee deferral money only
+        errorDetails:
+          $ref: '#/components/schemas/ErrorModel'
+        taxDetails:
+          $ref: '#/components/schemas/TaxDetails'
+    TransferAmountDetails:
+      type: object
+      properties:
+        preTaxTransferAmount:
+          type: number
+          description: The dollar amount of pre-tax money to transfer to ROTH.  You
+            can pick a dollar amount or a percent, not both.
+          format: double
+          example: 1000.0
+        preTaxTransferPercent:
+          type: number
+          description: The percent of the total preTaxTransferAmountAvailable to transfer
+            to ROTH.  You can pick a dollar amount or a percent, not both.
+          format: integer
+          example: 50.0
+        afterTaxTransferAmount:
+          type: number
+          description: The dollar amount of after tax money to transfer to ROTH.  You
+            can pick a dollar amount or a percent, not both.
+          format: double
+          example: 2000.0
+        afterTaxTransferPercent:
+          type: number
+          description: The percent of the total afterTaxTransferAmountAvailable to
+            transfer to ROTH.  You can pick a dollar amount or a percent, not both.
+          format: integer
+          example: 35
+    RothTransferQuote:
+      type: object
+      properties:
+        preTaxTransferAmount:
+          type: number
+          description: The dollar amount of pre-tax money that will be transferred
+            into ROTH.
+          format: double
+          example: 1000.0
+        afterTaxTransferAmount:
+          type: number
+          description: The dollar amount of after tax money that will be transferred
+            into ROTH.
+          format: double
+          example: 2000.0
+        effectiveTaxYear:
+          type: integer
+          description: The tax year the ROTH transfer will impact
+          format: int32
+          example: 2019
+        feeDetails:
+          $ref: '#/components/schemas/FeeDetails'
+        validationMessages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Text'
+    RothTransferRequestInput:
+      $ref: '#/components/schemas/RothTransferQuoteInput'
+    RothTransferRequest:
+      type: object
+      allOf:
+      - $ref: '#/components/schemas/RothTransferQuote'
+      - $ref: '#/components/schemas/RothTransferConfirmation'
+    RothTransferConfirmation:
+      type: object
+      properties:
+        id:
+          type: string
+    Text:
+      type: object
+      properties:
+        text:
+          type: string
+        textHtml:
+          type: string
+    error:
+      type: object
+      properties:
+        reason:
+          type: string
+        message:
+          type: string
+    ErrorModel:
+      required:
+      - code
+      - message
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+    TaxDetails:
+      type: object
+      properties:
+        allElectiveDeferralsAlreadyTaxed:
+          type: boolean
+          description: If all elective deferrals have already been taxed by the state
+            of residence
+        electiveDeferralsAlreadyTaxedAmount:
+          type: number
+          description: The dollar amount of existing elective defferals that have
+            already been taxed by state of residence.
+          format: double
+          example: 25500.0
+    RothTransferEligibilityDetails_ineligiblityReasons:
+      type: object
+      properties:
+        message:
+          $ref: '#/components/schemas/Text'
